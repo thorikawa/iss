@@ -12,6 +12,22 @@ class ISS:
     return 20*[0]
 
 
+class State:
+  def __init__(self):
+    self.rotations = 10*[0];
+
+  def getRotations():
+    return self.rotations;
+
+  def __str__(self):
+    str(self.rotations);
+    
+def getLegalAction():
+  def a1(state):
+    return 1;
+  return a1;
+    
+
 if __name__=='__main__':
   beta = input()
   iss = ISS()
