@@ -47,13 +47,13 @@ class Learner:
     for action in self.getLegalActions():
       nextState = action(currentState)
 
-      debug(nextState)
+      #debug(nextState)
       if not self.canCyclic(nextState, currentMinute+1):
         continue
 
       score = evaluate(library(nextState, currentMinute+1, self.beta, self.yaw))
       #debug(nextState)
-      debug(" ==> " + str(score))
+      #debug(" ==> " + str(score))
       if maxState is None or maxScore < score:
         maxScore = score
         maxState = nextState
