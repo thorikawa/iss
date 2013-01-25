@@ -496,8 +496,8 @@ class ConstraintsChecker {
         // set up position of sun
         ISSVis.sunTransform = ISSVis.makeSunProjection(ISSVis.beta, ISSVis.alpha);
         ISSVis.inverse = ISSVis.makeInverseSunProjection(ISSVis.beta, ISSVis.alpha);
-        ISSVis.toSun = new V();
-        ISSVis.sunTransform.transform(new V(0, -1, 0), ISSVis.toSun);
+        ISSVis.toSun = new Vector3d();
+        ISSVis.sunTransform.transform(new Vector3d(0, -1, 0), ISSVis.toSun);
 
         // rotate joints
         ISSVis.rotate_SARJ_BGA(ISSVis.m, ISSVis.control);
@@ -505,17 +505,15 @@ class ConstraintsChecker {
 
         // go
 
+        long start = System.currentTimeMillis();
         double[] answer = ISSVis.calculateOnePosition(ISSVis.m, ISSVis.toSun, ISSVis.inverse);
+        long stop = System.currentTimeMillis();
+        System.out.println("takes " + (stop - start) + " msec");
 
-        if (minute < -1) {
-            for (int saw = 0; saw < 8; saw++) {
-                double p = 0;
-                for (int str = 0; str < 82; str++) {
-                    p += answer[saw] * 104.96 / 41 * 1371.3 * 0.1 * Math.max(0.0, 1.0 - answer[8 + saw * 82 + str] * 5);
-                }
-                // p /= 82 ;
-            }
-        }
+        /*
+         * if (minute < -1) { for (int saw = 0; saw < 8; saw++) { double p = 0; for (int str = 0; str < 82; str++) { p += answer[saw] * 104.96 / 41 * 1371.3 * 0.1 * Math.max(0.0, 1.0 - answer[8 + saw
+         * * 82 + str] * 5); } // p /= 82 ; } }
+         */
 
         this.lastAns = answer;
 
@@ -855,7 +853,7 @@ class M
         }
     }
 
-    void transform(V in, V out) {
+    void transform(Vector3d in, Vector3d out) {
         tempA1[0] = in.x;
         tempA1[1] = in.y;
         tempA1[2] = in.z;
@@ -912,7 +910,7 @@ class M
                 out.m[i][j] = tempMc.m[i][j];
     };
 
-    static void translate(V trans, M out) {
+    static void translate(Vector3d trans, M out) {
         translate(trans.x, trans.y, trans.z, out);
     };
 
@@ -927,7 +925,7 @@ class M
         out.m[2][3] = z;
     };
 
-    static void negative_translate(V trans, M out) {
+    static void negative_translate(Vector3d trans, M out) {
         M.translate(-trans.x, -trans.y, -trans.z, out);
     };
 
@@ -936,7 +934,7 @@ class M
         compose_pre(tempMr, out);
     };
 
-    void translate_compose(V trans, M out) {
+    void translate_compose(Vector3d trans, M out) {
         M.translate(trans, tempMr);
         compose_pre(tempMr, out);
     };
@@ -1044,7 +1042,7 @@ class M
  */
 
 // ************************************************************
-class V
+class Vector3d
 // ************************************************************
 // ************************************************************
 {
@@ -1085,23 +1083,23 @@ class V
         return x * v.x + y * v.y + z * v.z;
     };
 
-    double dot(V v) {
+    double dot(Vector3d v) {
         return x * v.x + y * v.y + z * v.z;
     };
 
-    V(double x1, double x2, double x3) {
+    Vector3d(double x1, double x2, double x3) {
         x = x1;
         y = x2;
         z = x3;
     }
 
-    V(V o) {
+    Vector3d(Vector3d o) {
         x = o.x;
         y = o.y;
         z = o.z;
     }
 
-    V() {
+    Vector3d() {
         x = 0;
         y = 0;
         z = 0;
@@ -2044,7 +2042,7 @@ abstract class Prim
 
     static int next_order = 0;
 
-    V normal;
+    Vector3d normal;
 
     abstract Prim closestIntersection(Ray r);
 
@@ -2101,7 +2099,7 @@ class Ray
 {
     P o;
 
-    V d;
+    Vector3d d;
 
     void print(String pre, String post) {
         System.out.print(pre);
@@ -2137,14 +2135,14 @@ class Ray
         System.out.println();
     };
 
-    Ray(P origin, V direction) {
+    Ray(P origin, Vector3d direction) {
         o = new P(origin);
-        d = new V(direction);
+        d = new Vector3d(direction);
     };
 
     Ray() {
         o = new P();
-        d = new V();
+        d = new Vector3d();
     };
 
     // ************************************************************
@@ -2234,7 +2232,7 @@ class Sphere extends Prim
         basegreen = 200;
         baseblue = 200;
         visible = true;
-        normal = new V();
+        normal = new Vector3d();
     }
 
     Sphere(P c, double r) {
@@ -2245,7 +2243,7 @@ class Sphere extends Prim
         basegreen = 200;
         baseblue = 200;
         visible = true;
-        normal = new V();
+        normal = new Vector3d();
     }
 
     // ************************************************************
@@ -2269,7 +2267,7 @@ class Cylinder extends Prim
 
     double length;
 
-    V n; // unit vector along axis from a1 to a2
+    Vector3d n; // unit vector along axis from a1 to a2
 
     double D1; // n and d are equation of plane of end cap 1
 
@@ -2336,10 +2334,10 @@ class Cylinder extends Prim
         a2 = new P(p2);
         original_a1 = new P(p1);
         original_a2 = new P(p2);
-        normal = new V();
+        normal = new Vector3d();
         rad = radius;
         length = Math.sqrt((a1.x - a2.x) * (a1.x - a2.x) + (a1.y - a2.y) * (a1.y - a2.y) + (a1.z - a2.z) * (a1.z - a2.z));
-        n = new V((a2.x - a1.x) / length, (a2.y - a1.y) / length, (a2.z - a1.z) / length);
+        n = new Vector3d((a2.x - a1.x) / length, (a2.y - a1.y) / length, (a2.z - a1.z) / length);
         D1 = -(a1.x * n.x + a1.y * n.y + a1.z * n.z);
         D2 = -(a2.x * n.x + a2.y * n.y + a2.z * n.z);
         visible = true;
@@ -2780,7 +2778,7 @@ class Polygon extends Prim // convex only
         original_v[1] = new P(p2);
         original_v[2] = new P(p3);
 
-        normal = new V();
+        normal = new Vector3d();
         setupEquation();
         visible = true;
         basered = (short) (200 - (v[0].y + 50000) / 100000 * 100);
@@ -2798,7 +2796,7 @@ class Polygon extends Prim // convex only
             v[i] = new P(p[i]);
             original_v[i] = new P(p[i]);
         }
-        normal = new V();
+        normal = new Vector3d();
         setupEquation();
         visible = true;
         basered = (short) (200 - (v[0].y + 50000) / 100000 * 150);
@@ -2880,7 +2878,7 @@ class ISSVis
 {
     static String model_name;
 
-    static V toSun = new V();
+    static Vector3d toSun = new Vector3d();
 
     static Structure m;
 
@@ -2985,11 +2983,18 @@ class ISSVis
 
     static int rrez;
 
+    // ### DEFAULT VALUE
     static final int SUBDIVISION_LIMIT = 3000;
+
+    // static final int SUBDIVISION_LIMIT = 1000;
 
     static final int MAX_TLEVEL = 40;
 
+    // #####Tweak IT!!!#####
+    // ### DEFAULT VALUE
     static int max_t_level = 10;
+
+    // static int max_t_level = 1;
 
     static int deepest_t_level = 0;
 
@@ -3198,7 +3203,7 @@ class ISSVis
     }
 
     // ************************************************************
-    void minus(P e, P s, V d)
+    void minus(P e, P s, Vector3d d)
     // ************************************************************
     {
         d.x = e.x - s.x;
@@ -3280,7 +3285,7 @@ class ISSVis
     }
 
     // ************************************************************
-    static void render_from_view(int res, Structure m, M view_proj, M inverse_view, V to_sun)
+    static void render_from_view(int res, Structure m, M view_proj, M inverse_view, Vector3d to_sun)
     // ************************************************************
     {
         // we assume, the viewpoint is in the direction of the -y axis
@@ -3289,7 +3294,7 @@ class ISSVis
         if (res < 3)
             return;
         rrez = res;
-        V view = new V(0, 1, 0); // from sun untransfromed (ad hoc)
+        Vector3d view = new Vector3d(0, 1, 0); // from sun untransfromed (ad hoc)
         P base = new P();
         Prim the_hit = null;
         Prim shadower = null;
@@ -3443,9 +3448,9 @@ class ISSVis
         Prim[][] hitter = new Prim[res][res];
         Random rnd = new Random();
 
-        V from_sun = new V(0, 1, 0); // from sun untransfromed (ad hoc)
+        Vector3d from_sun = new Vector3d(0, 1, 0); // from sun untransfromed (ad hoc)
         proj.transform(from_sun, vray.d); // now transformed
-        V to_sun = new V(0, -1, 0); // from sun untransfromed (ad hoc)
+        Vector3d to_sun = new Vector3d(0, -1, 0); // from sun untransfromed (ad hoc)
         proj.transform(to_sun, to_sun); // now transformed
         double dz = w / (res - 1);
         double dx = w / (res - 1);
@@ -3571,7 +3576,7 @@ class ISSVis
     }
 
     // ************************************************************
-    static void rotate_BGA(Structure m, V axis, double angle, int side, int saw)
+    static void rotate_BGA(Structure m, Vector3d axis, double angle, int side, int saw)
     // ************************************************************
     {
         M trans = m.child[side].child[saw].transform;
@@ -3581,7 +3586,7 @@ class ISSVis
     }
 
     // ************************************************************
-    static void rotate_SARJ(Structure m, V axis, double angle, int sarj)
+    static void rotate_SARJ(Structure m, Vector3d axis, double angle, int sarj)
     // ************************************************************
     {
         M trans = m.child[sarj].transform;
@@ -3606,18 +3611,18 @@ class ISSVis
         // x translation doesn't matter here since BGA rotation axes are
         // parallel to the x axis
         // similar to y translation for SARJs
-        V[] rotation_axis = new V[10];
+        Vector3d[] rotation_axis = new Vector3d[10];
 
-        rotation_axis[0] = new V(5, 0, 11); // ssarj
-        rotation_axis[1] = new V(5, 0, 11); // psarj
-        rotation_axis[2] = new V(0, 33350, -750); // 1A
-        rotation_axis[3] = new V(0, -33350, -750); // 2A
-        rotation_axis[4] = new V(0, 33350, 750); // 3A
-        rotation_axis[5] = new V(0, -33350, 750); // 4A
-        rotation_axis[6] = new V(0, 48455, 750); // 1B
-        rotation_axis[7] = new V(0, -48455, 750); // 2B
-        rotation_axis[8] = new V(0, 48455, -750); // 3B
-        rotation_axis[9] = new V(0, -48455, -750); // 4B
+        rotation_axis[0] = new Vector3d(5, 0, 11); // ssarj
+        rotation_axis[1] = new Vector3d(5, 0, 11); // psarj
+        rotation_axis[2] = new Vector3d(0, 33350, -750); // 1A
+        rotation_axis[3] = new Vector3d(0, -33350, -750); // 2A
+        rotation_axis[4] = new Vector3d(0, 33350, 750); // 3A
+        rotation_axis[5] = new Vector3d(0, -33350, 750); // 4A
+        rotation_axis[6] = new Vector3d(0, 48455, 750); // 1B
+        rotation_axis[7] = new Vector3d(0, -48455, 750); // 2B
+        rotation_axis[8] = new Vector3d(0, 48455, -750); // 3B
+        rotation_axis[9] = new Vector3d(0, -48455, -750); // 4B
 
         int[] rotation_direction = new int[10];
 
@@ -3665,8 +3670,8 @@ class ISSVis
         rotate_BGA(m, rotation_axis[8], ang[8], 0, 3); // 3B
         rotate_BGA(m, rotation_axis[9], ang[9], 1, 3); // 4B
 
-        V port_radiator_axis = new V(-250, -14600, -5.5);
-        V starboard_radiator_axis = new V(-250, 14694, -23);
+        Vector3d port_radiator_axis = new Vector3d(-250, -14600, -5.5);
+        Vector3d starboard_radiator_axis = new Vector3d(-250, 14694, -23);
         double port_angle = 45;
         double starboard_angle = ((beta > 0) ? 25 : 60);
 
@@ -3699,8 +3704,8 @@ class ISSVis
         double alpha = 360.0 * step / 92;
         sunTransform = makeSunProjection(beta, alpha /* orbit */);
         inverse = makeInverseSunProjection(beta, alpha /* orbit */);
-        toSun = new V();
-        sunTransform.transform(new V(0, -1, 0), toSun);
+        toSun = new Vector3d();
+        sunTransform.transform(new Vector3d(0, -1, 0), toSun);
     }
 
     // ************************************************************
@@ -3783,10 +3788,15 @@ class ISSVis
         return c;
     }
 
+    // ##########
+    static int subdivide_call = 0;
+
     // ************************************************************
     static double subdivide_triangle(int level, P v1, P v2, P v3, double area)
     // ************************************************************
     {
+        // System.out.print("count:");
+        // System.out.println(++subdivide_call);
         // We accumulate an error of about 2^(-max_binary_search_level)
         // for every level of recursion
 
@@ -4473,7 +4483,7 @@ class ISSVis
     static double[] shadow_fraction = new double[41];
 
     // ************************************************************
-    static double[] calculateOneBlanketT(Polygon panel, Structure m, V toSun, M proj, boolean is_panel_1)
+    static double[] calculateOneBlanketT(Polygon panel, Structure m, Vector3d toSun, M proj, boolean is_panel_1)
     // ************************************************************
     {
         // The length of the area containing strings is
@@ -4580,7 +4590,7 @@ class ISSVis
     }
 
     // ************************************************************
-    static double[] calculateFourLongerons(int side, int saw, Structure m, V toSun, M proj)
+    static double[] calculateFourLongerons(int side, int saw, Structure m, Vector3d toSun, M proj)
     // ************************************************************
     {
         double[] answer = new double[4];
@@ -4651,7 +4661,7 @@ class ISSVis
     static double[][] stringShadowFraction = new double[2][41];
 
     // ************************************************************
-    static void calculateOneSAW(int control_index, int side, int saw, Structure m, V toSun, M proj, double[] answer)
+    static void calculateOneSAW(int control_index, int side, int saw, Structure m, Vector3d toSun, M proj, double[] answer)
     // ************************************************************
     {
         double cosine = 0;
@@ -4669,13 +4679,22 @@ class ISSVis
         cosine = blanket.normal.dot(toSun);
         // if ( cosine > 0 )
         {
+            long start = System.currentTimeMillis();
             shadows = calculateOneBlanketT(blanket, m, toSun, proj, true);
+            long stop = System.currentTimeMillis();
+            // System.out.println("calculateOneBlanketT1:" + (stop - start) + " msec");
+            System.out.println(stop - start);
+
             for (int s = 0; s < 41; s++)
                 stringShadowFraction[0][s] = shadows[s];
 
             blanket = (Polygon) m.child[side].child[saw].solid[3].obj[0];
             // borderOneBlanket ( blanket , m , toSun , proj , true ) ;
+            start = System.currentTimeMillis();
             shadows = calculateOneBlanketT(blanket, m, toSun, proj, false);
+            stop = System.currentTimeMillis();
+            // System.out.println("calculateOneBlanketT2:" + (stop - start) + " msec");
+            System.out.println(stop - start);
             for (int s = 0; s < 41; s++)
                 stringShadowFraction[1][s] = shadows[s];
         }
@@ -4695,18 +4714,20 @@ class ISSVis
             for (int s = 0; s < 41; s++)
                 answer[8 + control_index * 82 + b * 41 + s] = stringShadowFraction[b][s];
 
-        longeronShadowFraction = calculateFourLongerons(side, saw, m, toSun, proj);
+        // XXX temporary comment tou longeron check
+        if (false) {
+            longeronShadowFraction = calculateFourLongerons(side, saw, m, toSun, proj);
 
-        for (int L = 0; L < 4; L++) {
-            answer[8 + 8 * 82 + control_index * 4 + L] = longeronShadowFraction[L];
+            for (int L = 0; L < 4; L++) {
+                answer[8 + 8 * 82 + control_index * 4 + L] = longeronShadowFraction[L];
+            }
         }
-
     }
 
     static double[] opanswer = new double[8 + 8 * 2 * 41 + 8 * 4];
 
     // ************************************************************
-    static double[] calculateOnePosition(Structure m, V toSun, M proj)
+    static double[] calculateOnePosition(Structure m, Vector3d toSun, M proj)
     // ************************************************************
     {
         // output is in 1A 2A order like almost all places
@@ -5104,7 +5125,7 @@ class ISSVis
             inverse = makeInverseSunProjection(beta, alpha /* orbit */);
             // toSun vector is used for power calculations
             // System.out.println ( alpha + " " + beta ) ;
-            sunTransform.transform(new V(0, -1, 0), toSun);
+            sunTransform.transform(new Vector3d(0, -1, 0), toSun);
             sray.d.x = toSun.x;
             sray.d.y = toSun.y;
             sray.d.z = toSun.z;
@@ -5118,10 +5139,10 @@ class ISSVis
         if (rendering) {
             M view_transform = makeViewProjection(view_beta, view_alpha);
             M inverse_view = makeInverseSunProjection(view_beta, view_alpha);
-            V to_sun = new V();
-            V from_sun = new V();
-            sunTransform.transform(new V(0, -1, 0), to_sun);
-            sunTransform.transform(new V(0, 1, 0), from_sun);
+            Vector3d to_sun = new Vector3d();
+            Vector3d from_sun = new Vector3d();
+            sunTransform.transform(new Vector3d(0, -1, 0), to_sun);
+            sunTransform.transform(new Vector3d(0, 1, 0), from_sun);
 
             if (longerons_visible)
                 longeron_visibility(m, true);
@@ -5445,7 +5466,7 @@ class ISSVis
                 view_alpha = (beta > 0) ? 20 : -20;
             if (view_beta > 3600)
                 view_beta = (beta > 0) ? 40 : -40;
-            runTest(cmd);
+            // runTest(cmd);
         }
 
         else if (csvname != null)
