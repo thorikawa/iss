@@ -9,9 +9,10 @@ public class ISSUtils {
     }
 
     public static double normalizeDegree(double degree) {
-        if (degree >= 360.0) {
-            return degree - 360.0;
-        } else if (degree < 0) {
+        while (degree >= 360.0) {
+            degree -= 360.0;
+        }
+        if (degree < 0) {
             return degree + 360.0;
         } else {
             return degree;

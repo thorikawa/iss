@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -67,7 +68,8 @@ public class Learner {
         State state = initialState;
         for (int i = 0; i < 92; i++) {
             if (i != 0) {
-                state = this.getNextMaxState(state, i - 1);
+                // state = this.getNextMaxState(state, i - 1);
+                state = this.descent(state, i - 1);
             }
             LibraryWrapper.proceed(state);
         }
@@ -92,6 +94,43 @@ public class Learner {
             }
         }
         return maxState;
+    }
+
+    static final double DIFF = 0.1;
+
+    static final double ALPHA = 0.001;
+
+    static final double THRESHOLD = 0.1;
+
+    static final int ENTIRE_LOOP_COUNT = 10;
+
+    static final int MAX_SINGLE_LOOP_COUNT = 200;
+
+    private State descent(State currentState, int currentMinute) {
+        int nextMinute = currentMinute + 1;
+        for (int k = 0; k < ENTIRE_LOOP_COUNT; k++) {
+            System.err.println("loop1:" + k);
+            for (int i = 0; i < 10; i++) {
+                System.out.println(" loop2 roration:" + i);
+                for (int loop = 0; loop < MAX_SINGLE_LOOP_COUNT; loop++) {
+                    System.err.println("  loop3:" + loop);
+                    System.err.println(currentState);
+                    State state1 = currentState.copy();
+                    State state2 = currentState.copy();
+                    state1.getSingleState(i).addRotation(DIFF);
+                    state2.getSingleState(i).addRotation(-DIFF);
+                    double score1 = libraryWrapper.evaluate(state1, nextMinute, this.beta, this.yaw);
+                    double score2 = libraryWrapper.evaluate(state2, nextMinute, this.beta, this.yaw);
+                    System.err.println(score1 + ":" + score2);
+                    double d = (score1 - score2) / (DIFF + DIFF);
+                    if (Math.abs(d) < THRESHOLD) {
+                        break;
+                    }
+                    currentState.getSingleState(i).addRotation(ALPHA * d);
+                }
+            }
+        }
+        return currentState;
     }
 
     private boolean canBeCyclic(State state, int minute) {
@@ -124,6 +163,8 @@ class SingleState {
 
     private double velocity;
 
+    DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00");
+
     public SingleState(double rotation, double velocity) {
         this.rotation = ISSUtils.normalizeDegree(rotation);
         this.velocity = velocity;
@@ -140,6 +181,18 @@ class SingleState {
         return velocity;
     }
 
+    protected SingleState copy() {
+        return new SingleState(this.getRotation(), this.getVelocity());
+    }
+
+    public void addRotation(double diff) {
+        this.rotation = ISSUtils.normalizeDegree(rotation + diff);
+    }
+
+    @Override
+    public String toString() {
+        return DECIMAL_FORMAT.format(rotation);
+    }
 }
 
 class SingleAction {
@@ -162,7 +215,7 @@ class State {
     private SingleState singleStates[] = new SingleState[10];
 
     public void setSingleState(int i, SingleState s) {
-        singleStates[i] = s;
+        singleStates[i] = s.copy();
     }
 
     public double[] getRotations() {
@@ -177,6 +230,28 @@ class State {
         return singleStates;
     }
 
+    public SingleState getSingleState(int i) {
+        return singleStates[i];
+    }
+
+    public State copy() {
+        State newState = new State();
+        for (int i = 0; i < singleStates.length; i++) {
+            newState.setSingleState(i, singleStates[i].copy());
+        }
+        return newState;
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < singleStates.length; i++) {
+            sb.append(singleStates[i].toString());
+            if (i != singleStates.length - 1)
+                sb.append(",");
+        }
+        return sb.toString();
+    }
 }
 
 class ActionIterable implements Iterable<Action> {

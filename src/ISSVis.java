@@ -491,7 +491,7 @@ class ConstraintsChecker {
             ISSVis.control[i] = input[i + 4];
 
         // set longerons invisible
-        ISSVis.longeron_visibility(ISSVis.m, false);
+        ISSVis.longeron_visibility(ISSVis.structure, false);
 
         // set up position of sun
         ISSVis.sunTransform = ISSVis.makeSunProjection(ISSVis.beta, ISSVis.alpha);
@@ -500,15 +500,15 @@ class ConstraintsChecker {
         ISSVis.sunTransform.transform(new Vector3d(0, -1, 0), ISSVis.toSun);
 
         // rotate joints
-        ISSVis.rotate_SARJ_BGA(ISSVis.m, ISSVis.control);
-        ISSVis.m.transform();
+        ISSVis.rotate_SARJ_BGA(ISSVis.structure, ISSVis.control);
+        ISSVis.structure.transform();
 
         // go
 
         long start = System.currentTimeMillis();
-        double[] answer = ISSVis.calculateOnePosition(ISSVis.m, ISSVis.toSun, ISSVis.inverse);
+        double[] answer = ISSVis.calculateOnePosition(ISSVis.structure, ISSVis.toSun, ISSVis.inverse);
         long stop = System.currentTimeMillis();
-        System.out.println("takes " + (stop - start) + " msec");
+        // System.out.println("takes " + (stop - start) + " msec");
 
         /*
          * if (minute < -1) { for (int saw = 0; saw < 8; saw++) { double p = 0; for (int str = 0; str < 82; str++) { p += answer[saw] * 104.96 / 41 * 1371.3 * 0.1 * Math.max(0.0, 1.0 - answer[8 + saw
@@ -1886,24 +1886,32 @@ class Structure
         return hit;
     }
 
+    // static int count = 0;
+
     // ************************************************************
     void allIntersections(Ray ray, PrimList pl)
     // ************************************************************
     {
+        // count++;
+        // System.out.println("intersect:" + count);
+
         ISSVis.all_cast++;
         if (!visible)
             return;
         boolean bbhit = false;
         if (bb.length == 0)
             bbhit = true;
+        // System.out.println("bblength:" + bb.length);
         for (int i = 0; i < bb.length; ++i) {
             if (bb[i].anyIntersection(ray) != null)
                 bbhit = true;
         }
         if (bbhit) {
+            // System.out.println("solidlength:" + solid.length);
             for (int s = 0; s < solid.length; ++s)
                 solid[s].allIntersections(ray, pl);
         }
+        // System.out.println("childlength:" + child.length);
         for (int c = 0; c < child.length; c++)
             child[c].allIntersections(ray, pl);
         ISSVis.all_hits += pl.s;
@@ -2880,7 +2888,7 @@ class ISSVis
 
     static Vector3d toSun = new Vector3d();
 
-    static Structure m;
+    static Structure structure;
 
     static M sunTransform;
 
@@ -2992,9 +3000,9 @@ class ISSVis
 
     // #####Tweak IT!!!#####
     // ### DEFAULT VALUE
-    static int max_t_level = 10;
+    // static int max_t_level = 10;
 
-    // static int max_t_level = 1;
+    static int max_t_level = 1;
 
     static int deepest_t_level = 0;
 
@@ -3813,7 +3821,7 @@ class ISSVis
         sray.o.y = v1.y;
         sray.o.z = v1.z;
         p[0].reset();
-        m.allIntersections(sray, p[0]);
+        structure.allIntersections(sray, p[0]);
 
         t.v2.x = v2.x;
         t.v2.y = v2.y;
@@ -3822,7 +3830,7 @@ class ISSVis
         sray.o.y = v2.y;
         sray.o.z = v2.z;
         p[1].reset();
-        m.allIntersections(sray, p[1]);
+        structure.allIntersections(sray, p[1]);
 
         t.v3.x = v3.x;
         t.v3.y = v3.y;
@@ -3831,7 +3839,7 @@ class ISSVis
         sray.o.y = v3.y;
         sray.o.z = v3.z;
         p[2].reset();
-        m.allIntersections(sray, p[2]);
+        structure.allIntersections(sray, p[2]);
 
         // System.out.println ( p[0].s + " " + p[1].s + " " + p[2].s ) ;
         return subdivide_triangle(level, area);
@@ -4021,7 +4029,7 @@ class ISSVis
                 sray.o.y = t2.v1.y;
                 sray.o.z = t2.v1.z;
                 p2[0].reset();
-                m.allIntersections(sray, p2[0]);
+                structure.allIntersections(sray, p2[0]);
 
                 t2.v2.x = t1.v23h.x;
                 t2.v2.y = t1.v23h.y;
@@ -4030,7 +4038,7 @@ class ISSVis
                 sray.o.y = t2.v2.y;
                 sray.o.z = t2.v2.z;
                 p2[1].reset();
-                m.allIntersections(sray, p2[1]);
+                structure.allIntersections(sray, p2[1]);
 
                 t2.v3.x = v3.x;
                 t2.v3.y = v3.y;
@@ -4082,7 +4090,7 @@ class ISSVis
             sray.o.y = t2.v1.y;
             sray.o.z = t2.v1.z;
             p2[0].reset();
-            m.allIntersections(sray, p2[0]);
+            structure.allIntersections(sray, p2[0]);
 
             t2.v2.x = t1.v23h.x;
             t2.v2.y = t1.v23h.y;
@@ -4091,7 +4099,7 @@ class ISSVis
             sray.o.y = t2.v2.y;
             sray.o.z = t2.v2.z;
             p2[1].reset();
-            m.allIntersections(sray, p2[1]);
+            structure.allIntersections(sray, p2[1]);
 
             t2.v3.x = v3.x;
             t2.v3.y = v3.y;
@@ -4132,7 +4140,7 @@ class ISSVis
         sray.o.y = t2.v3.y;
         sray.o.z = t2.v3.z;
         p2[2].reset();
-        m.allIntersections(sray, p2[2]);
+        structure.allIntersections(sray, p2[2]);
 
         t2.area = (area - covered_area) * 0.5;
         t2.caseno = 23;
@@ -4219,7 +4227,7 @@ class ISSVis
                 sray.o.y = t1.v12l.y;
                 sray.o.z = t1.v12l.z;
                 prim_stack[level + 1][0].reset();
-                m.allIntersections(sray, prim_stack[level + 1][0]);
+                structure.allIntersections(sray, prim_stack[level + 1][0]);
 
                 t2.v2.x = t1.v31l.x;
                 t2.v2.y = t1.v31l.y;
@@ -4228,7 +4236,7 @@ class ISSVis
                 sray.o.y = t1.v31l.y;
                 sray.o.z = t1.v31l.z;
                 prim_stack[level + 1][1].reset();
-                m.allIntersections(sray, prim_stack[level + 1][1]);
+                structure.allIntersections(sray, prim_stack[level + 1][1]);
 
                 t2.v3.x = v2.x;
                 t2.v3.y = v2.y;
@@ -4304,7 +4312,7 @@ class ISSVis
                 sray.o.y = t2.v1.y;
                 sray.o.z = t2.v1.z;
                 prim_stack[level + 1][0].reset();
-                m.allIntersections(sray, prim_stack[level + 1][0]);
+                structure.allIntersections(sray, prim_stack[level + 1][0]);
 
                 t2.v2.x = v2.x;
                 t2.v2.y = v2.y;
@@ -4328,7 +4336,7 @@ class ISSVis
                     sray.o.y = t2.v2.y;
                     sray.o.z = t2.v2.z;
                     prim_stack[level + 1][1].reset();
-                    m.allIntersections(sray, prim_stack[level + 1][1]);
+                    structure.allIntersections(sray, prim_stack[level + 1][1]);
                     t2.value = bisector;
                     t2.caseno = 141;
                 } else {
@@ -4385,7 +4393,7 @@ class ISSVis
                 sray.o.y = t2.v1.y;
                 sray.o.z = t2.v1.z;
                 prim_stack[level + 1][0].reset();
-                m.allIntersections(sray, prim_stack[level + 1][0]);
+                structure.allIntersections(sray, prim_stack[level + 1][0]);
 
                 t2.v2.x = v2.x;
                 t2.v2.y = v2.y;
@@ -4409,7 +4417,7 @@ class ISSVis
                     sray.o.y = t2.v3.y;
                     sray.o.z = t2.v3.z;
                     prim_stack[level + 1][2].reset();
-                    m.allIntersections(sray, prim_stack[level + 1][2]);
+                    structure.allIntersections(sray, prim_stack[level + 1][2]);
                     t2.value = bisector;
                     t2.caseno = 161;
                 } else {
@@ -4679,22 +4687,22 @@ class ISSVis
         cosine = blanket.normal.dot(toSun);
         // if ( cosine > 0 )
         {
-            long start = System.currentTimeMillis();
+            // long start = System.currentTimeMillis();
             shadows = calculateOneBlanketT(blanket, m, toSun, proj, true);
-            long stop = System.currentTimeMillis();
+            // long stop = System.currentTimeMillis();
             // System.out.println("calculateOneBlanketT1:" + (stop - start) + " msec");
-            System.out.println(stop - start);
+            // System.out.println(stop - start);
 
             for (int s = 0; s < 41; s++)
                 stringShadowFraction[0][s] = shadows[s];
 
             blanket = (Polygon) m.child[side].child[saw].solid[3].obj[0];
             // borderOneBlanket ( blanket , m , toSun , proj , true ) ;
-            start = System.currentTimeMillis();
+            // start = System.currentTimeMillis();
             shadows = calculateOneBlanketT(blanket, m, toSun, proj, false);
-            stop = System.currentTimeMillis();
+            // stop = System.currentTimeMillis();
             // System.out.println("calculateOneBlanketT2:" + (stop - start) + " msec");
-            System.out.println(stop - start);
+            // System.out.println(stop - start);
             for (int s = 0; s < 41; s++)
                 stringShadowFraction[1][s] = shadows[s];
         }
@@ -4931,18 +4939,18 @@ class ISSVis
         }
 
         ISS_Reader r = new ISS_Reader(tokens);
-        m = r.readModel();
+        structure = r.readModel();
 
-        colorit(m, 0, 0, 250, 0, 0);
-        colorit(m, 0, 1, 250, 100, 100);
-        colorit(m, 0, 2, 230, 230, 150);
-        colorit(m, 0, 3, 230, 230, 0);
-        colorit(m, 1, 0, 150, 250, 250);
-        colorit(m, 1, 1, 0, 250, 250);
-        colorit(m, 1, 2, 0, 0, 250);
-        colorit(m, 1, 3, 100, 100, 250);
+        colorit(structure, 0, 0, 250, 0, 0);
+        colorit(structure, 0, 1, 250, 100, 100);
+        colorit(structure, 0, 2, 230, 230, 150);
+        colorit(structure, 0, 3, 230, 230, 0);
+        colorit(structure, 1, 0, 150, 250, 250);
+        colorit(structure, 1, 1, 0, 250, 250);
+        colorit(structure, 1, 2, 0, 0, 250);
+        colorit(structure, 1, 3, 100, 100, 250);
 
-        longeron_visibility(m, false);
+        longeron_visibility(structure, false);
     }
 
     // ************************************************************
@@ -4983,16 +4991,16 @@ class ISSVis
     // ************************************************************
     {
         ISS_Reader r = new ISS_Reader(mfile);
-        m = r.readModel();
+        structure = r.readModel();
 
-        colorit(m, 0, 0, 250, 0, 0);
-        colorit(m, 0, 1, 250, 100, 100);
-        colorit(m, 0, 2, 230, 230, 150);
-        colorit(m, 0, 3, 230, 230, 0);
-        colorit(m, 1, 0, 150, 250, 250);
-        colorit(m, 1, 1, 0, 250, 250);
-        colorit(m, 1, 2, 0, 0, 250);
-        colorit(m, 1, 3, 100, 100, 250);
+        colorit(structure, 0, 0, 250, 0, 0);
+        colorit(structure, 0, 1, 250, 100, 100);
+        colorit(structure, 0, 2, 230, 230, 150);
+        colorit(structure, 0, 3, 230, 230, 0);
+        colorit(structure, 1, 0, 150, 250, 250);
+        colorit(structure, 1, 1, 0, 250, 250);
+        colorit(structure, 1, 2, 0, 0, 250);
+        colorit(structure, 1, 3, 100, 100, 250);
 
         if (rendering) {
             allocate(res);
@@ -5131,9 +5139,9 @@ class ISSVis
             sray.d.z = toSun.z;
 
             // places model transformations (rotations) into data structure
-            rotate_SARJ_BGA(m, control);
+            rotate_SARJ_BGA(structure, control);
             // applies transformations
-            m.transform();
+            structure.transform();
         }
 
         if (rendering) {
@@ -5145,21 +5153,21 @@ class ISSVis
             sunTransform.transform(new Vector3d(0, 1, 0), from_sun);
 
             if (longerons_visible)
-                longeron_visibility(m, true);
+                longeron_visibility(structure, true);
 
-            render_from_view(res, m, view_transform, inverse_view, to_sun);
+            render_from_view(res, structure, view_transform, inverse_view, to_sun);
             for (int y = 0; y < res; ++y)
                 for (int x = 0; x < res * 3; ++x)
                     big_raster[y][x] = (byte) raster[y][x];
 
             M sun_view = makeViewProjection(beta, alpha);
-            render_from_sun(res, m, sun_view);
+            render_from_sun(res, structure, sun_view);
 
             for (int y = 0; y < res; ++y)
                 for (int x = 0; x < res * 3; ++x)
                     big_raster[y][x + res + res + res] = (byte) raster[y][x];
 
-            longeron_visibility(m, false);
+            longeron_visibility(structure, false);
         }
     }
 
@@ -5199,7 +5207,7 @@ class ISSVis
                 FileInputStream csv = new FileInputStream(csvname);
                 String line = ISS_Reader.readLine(csv); // skip first line
                 step_number = 0;
-                longeron_visibility(m, false);
+                longeron_visibility(structure, false);
                 String[] titles = null;
                 for (int step = 0; step < max_frame; step++) {
                     line = ISS_Reader.readLine(csv);
@@ -5209,7 +5217,7 @@ class ISSVis
                     do_render(true); // sets up transforms
 
                     // main evaluation function
-                    double[] ans = calculateOnePosition(m, toSun, inverse);
+                    double[] ans = calculateOnePosition(structure, toSun, inverse);
 
                     for (int saw = 0; saw < 8; ++saw) {
                         checker.cosTheta[step][saw] = ans[saw];
