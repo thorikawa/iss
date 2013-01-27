@@ -1,6 +1,9 @@
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,6 +17,8 @@ public class Learner {
     private State initialState;
 
     static LibraryWrapper libraryWrapper = new LibraryWrapper();
+
+    private OutputStreamWriter osw;
 
     public static void main(String[] args) {
 
@@ -61,15 +66,28 @@ public class Learner {
     public Learner(double beta, double yaw) {
         this.beta = beta;
         this.yaw = yaw;
+        try {
+            osw = new OutputStreamWriter(new FileOutputStream("out.txt"));
+        } catch (FileNotFoundException e) {
+            // TODO 自動生成された catch ブロック
+            e.printStackTrace();
+        }
     }
 
     public void learn(State initialState) {
         this.initialState = initialState;
         State state = initialState;
         for (int i = 0; i < 92; i++) {
-            if (i != 0) {
-                // state = this.getNextMaxState(state, i - 1);
-                state = this.descent(state, i - 1);
+            // if (i != 0) {
+            // state = this.getNextMaxState(state, i - 1);
+            state = this.gradientDescent(state, i);
+            // }
+            try {
+                osw.write(state.toString());
+                osw.write("\n");
+                osw.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             LibraryWrapper.proceed(state);
         }
@@ -104,33 +122,32 @@ public class Learner {
 
     static final int ENTIRE_LOOP_COUNT = 10;
 
-    static final int MAX_SINGLE_LOOP_COUNT = 200;
+    static final int MAX_SINGLE_LOOP_COUNT = 100;
 
-    private State descent(State currentState, int currentMinute) {
-        int nextMinute = currentMinute + 1;
+    private State gradientDescent(State startState, int minute) {
         for (int k = 0; k < ENTIRE_LOOP_COUNT; k++) {
             System.err.println("loop1:" + k);
             for (int i = 0; i < 10; i++) {
                 System.out.println(" loop2 roration:" + i);
                 for (int loop = 0; loop < MAX_SINGLE_LOOP_COUNT; loop++) {
                     System.err.println("  loop3:" + loop);
-                    System.err.println(currentState);
-                    State state1 = currentState.copy();
-                    State state2 = currentState.copy();
+                    System.err.println(startState);
+                    State state1 = startState.copy();
+                    State state2 = startState.copy();
                     state1.getSingleState(i).addRotation(DIFF);
                     state2.getSingleState(i).addRotation(-DIFF);
-                    double score1 = libraryWrapper.evaluate(state1, nextMinute, this.beta, this.yaw);
-                    double score2 = libraryWrapper.evaluate(state2, nextMinute, this.beta, this.yaw);
+                    double score1 = libraryWrapper.evaluate(state1, minute, this.beta, this.yaw);
+                    double score2 = libraryWrapper.evaluate(state2, minute, this.beta, this.yaw);
                     System.err.println(score1 + ":" + score2);
                     double d = (score1 - score2) / (DIFF + DIFF);
                     if (Math.abs(d) < THRESHOLD) {
                         break;
                     }
-                    currentState.getSingleState(i).addRotation(ALPHA * d);
+                    startState.getSingleState(i).addRotation(ALPHA * d);
                 }
             }
         }
-        return currentState;
+        return startState;
     }
 
     private boolean canBeCyclic(State state, int minute) {
