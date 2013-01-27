@@ -22,15 +22,19 @@ public class Learner {
 
 	public static void main(String[] args) {
 
-		InputStreamReader isr = new InputStreamReader(System.in);
-		BufferedReader reader = new BufferedReader(isr);
 		double beta = 0;
-		try {
-			beta = Double.parseDouble(reader.readLine());
-		} catch (NumberFormatException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (args.length > 0) {
+			beta = Double.parseDouble(args[0]);
+		} else {
+			InputStreamReader isr = new InputStreamReader(System.in);
+			BufferedReader reader = new BufferedReader(isr);
+			try {
+				beta = Double.parseDouble(reader.readLine());
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		libraryWrapper.init(beta, 0.0);
