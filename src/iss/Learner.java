@@ -184,7 +184,7 @@ public class Learner {
 					FutureTask<Double> task2 = new FutureTask<Double>(new Callable<Double>() {
 						@Override
 						public Double call() throws Exception {
-							double score2 = libraryWrapper1
+							double score2 = libraryWrapper2
 									.evaluate(state2, minute,
 											Learner.this.beta, Learner.this.yaw);
 							return score2;
@@ -193,8 +193,10 @@ public class Learner {
 					double score1 = 0;
 					double score2 = 0;
 					try {
-						task1.run();
-						task2.run();
+						Thread thread1 = new Thread(task1);
+						Thread thread2 = new Thread(task2);
+						thread1.start();
+						thread2.start();
 						score1 = task1.get();
 						score2 = task2.get();
 					} catch (InterruptedException e) {
