@@ -33,6 +33,7 @@ public class Learner {
 	public static void main(String[] args) {
 
 		double beta = 0;
+		double yaw = 0;
 		if (args.length > 0) {
 			beta = Double.parseDouble(args[0]);
 		} else {
@@ -46,14 +47,18 @@ public class Learner {
 				e.printStackTrace();
 			}
 		}
-		if (args.length > 1) {
+		if (args.length == 2) {
 			outFileName = args[1];
 		}
+		if (args.length == 3) {
+			yaw = Double.parseDouble(args[1]);
+			outFileName = args[2];
+		}
 
-		libraryWrapper1.init(beta, 0.0);
-		libraryWrapper2.init(beta, 0.0);
+		libraryWrapper1.init(beta, yaw);
+		libraryWrapper2.init(beta, yaw);
 
-		Learner instance = new Learner(beta, 0);
+		Learner instance = new Learner(beta, yaw);
 		State initialState = new State();
 		if (beta > 0) {
 			initialState.setSingleState(0, SingleState.ZERO);
@@ -172,24 +177,26 @@ public class Learner {
 					final State state2 = startState.copy();
 					state1.getSingleState(i).addRotation(DIFF);
 					state2.getSingleState(i).addRotation(-DIFF);
-					FutureTask<Double> task1 = new FutureTask<Double>(new Callable<Double>() {
-						@Override
-						public Double call() throws Exception {
-							double score1 = libraryWrapper1
-									.evaluate(state1, minute,
-											Learner.this.beta, Learner.this.yaw);
-							return score1;
-						}
-					});
-					FutureTask<Double> task2 = new FutureTask<Double>(new Callable<Double>() {
-						@Override
-						public Double call() throws Exception {
-							double score2 = libraryWrapper2
-									.evaluate(state2, minute,
-											Learner.this.beta, Learner.this.yaw);
-							return score2;
-						}
-					});
+					FutureTask<Double> task1 = new FutureTask<Double>(
+							new Callable<Double>() {
+								@Override
+								public Double call() throws Exception {
+									double score1 = libraryWrapper1.evaluate(
+											state1, minute, Learner.this.beta,
+											Learner.this.yaw);
+									return score1;
+								}
+							});
+					FutureTask<Double> task2 = new FutureTask<Double>(
+							new Callable<Double>() {
+								@Override
+								public Double call() throws Exception {
+									double score2 = libraryWrapper2.evaluate(
+											state2, minute, Learner.this.beta,
+											Learner.this.yaw);
+									return score2;
+								}
+							});
 					double score1 = 0;
 					double score2 = 0;
 					try {
