@@ -221,7 +221,7 @@ public class Learner {
 					double dDegree = ALPHA * d;
 					SingleState targetState = startState.getSingleState(i);
 					if (minute != 0) {
-						if (ISSUtils.minDegree(targetState.getRotation()
+						if (ISSUtils.minDegreeAbs(targetState.getRotation()
 								+ dDegree, startTargetState.getRotation()) > bigLimit[i]) {
 							System.err.println("reach limit...");
 							break;
@@ -238,12 +238,12 @@ public class Learner {
 		double initials[] = this.initialState.getRotations();
 		double rotations[] = state.getRotations();
 		for (int i = 0; i < 2; i++) {
-			if (ISSUtils.minDegree(rotations[i], initials[i]) > (92 - minute) * 4.5) {
+			if (ISSUtils.minDegreeAbs(rotations[i], initials[i]) > (92 - minute) * 4.5) {
 				return false;
 			}
 		}
 		for (int i = 2; i < 10; i++) {
-			if (ISSUtils.minDegree(rotations[i], initials[i]) > (92 - minute) * 8.7) {
+			if (ISSUtils.minDegreeAbs(rotations[i], initials[i]) > (92 - minute) * 8.7) {
 				return false;
 			}
 		}
