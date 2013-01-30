@@ -5,6 +5,8 @@ public class CPSSolver {
 
 	public static final double sarjMaxAcceleration = 0.005;
 
+	public static final boolean DEBUG = true;
+
 	// TODO Need to Test
 	public static double[] solveSarj(double[] rotations, double initial) {
 
@@ -16,7 +18,8 @@ public class CPSSolver {
 		// forward check
 		for (int i = 1; i < rotations.length; i++) {
 			ranges[i] = step(ranges[i - 1], rotations[i - 1], rotations[i]);
-			if (ranges[i].isEmpty()) {
+			System.out.println(ranges[i]);
+			if (ranges[i] == null || ranges[i].isEmpty()) {
 				ok = false;
 				break;
 			}
@@ -40,7 +43,7 @@ public class CPSSolver {
 				srcRotation = rotations[i];
 			}
 			Range backwardRange = step(ranges[i], srcRotation, rotations[i - 1]);
-			if (backwardRange.isEmpty()) {
+			if (backwardRange == null || backwardRange.isEmpty()) {
 				ok = false;
 				break;
 			}
@@ -57,7 +60,7 @@ public class CPSSolver {
 
 		System.err.println("CSP solved");
 		double res[] = new double[rotations.length];
-		for (int i=0; i<rotations.length; i++) {
+		for (int i = 0; i < rotations.length; i++) {
 			res[i] = ranges[i].getMidValue();
 		}
 		return res;
@@ -66,30 +69,69 @@ public class CPSSolver {
 	public static Range step(Range velocityRange, double angle1, double angle2) {
 		double maxNextV, minNextV;
 		double s = ISSUtils.determineShift(angle1, angle2);
+
+		System.out.println(" ##angle:" + angle1 + "-" + angle2 + "=" + s);
 		{
-			// (s - 9.0) / 60.0 : これ以上小さくなると解がなくなる境界値=どんなにがんばってもたどり着かない
-			double minv = Math.max(velocityRange.min, (s - 9.0) / 60.0);
+			// 下がってから上がるパターン
+			// 初期値スピードで、これ以上小さくなると解がなくなる境界値=どんなにがんばってもたどり着かない
+			double lowlimitv = (s - 9.0) / 60.0;
+			if (lowlimitv > velocityRange.max) {
+				return null;
+			}
+			double minv = Math.max(velocityRange.min, lowlimitv);
 			double r2 = 400.0 * (s - 60.0 * minv + 9.0);
+			if (r2 < 0) {
+				return null;
+			}
 			double t1 = 60 - Math.sqrt(r2 / 2.0);
 			// vの速度拘束条件による制約
-			double t1_limit = minv + sarjMaxVelocity * 200.0;
+			double t1_limit = (minv + sarjMaxVelocity) * 200.0;
+			if (DEBUG) {
+				System.out.println(" *minv=" + minv + ",t1=" + t1
+						+ ",t1_limit=" + t1_limit);
+			}
 			t1 = Math.min(t1, t1_limit);
-
-			double t2 = 60 - Math.sqrt(r2 - (t1 * t1));
+			double core = r2 - ((t1 - 60) * (t1 - 60));
+			if (core < 0) {
+				return null;
+			}
+			double t2 = 60 - Math.sqrt(core);
 			maxNextV = minv + (60.0 - t1 - t2) * sarjMaxAcceleration;
+			if (DEBUG) {
+				System.out.println(" => #(t1=" + t1 + ", t2=" + t2 + ", r^2="
+						+ r2 + ")");
+			}
 		}
 		{
-			double maxv = Math.max(velocityRange.max, (s + 9.0) / 60.0);
+			// 上がってから下がるパターン
+			// これ以上大きくなると解がなくなる境界値=どんなにがんばってもたどり着かない
+			double highlimitv = (s + 9.0) / 60.0;
+			if (highlimitv < velocityRange.min) {
+				return null;
+			}
+			double maxv = Math.min(velocityRange.max, highlimitv);
 			double r2 = 400.0 * (-s + 60.0 * maxv + 9.0);
+			if (r2 < 0) {
+				return null;
+			}
 			double t1 = 60 - Math.sqrt(r2 / 2.0);
 			// vの速度拘束条件による制約
 			double t1_limit = (sarjMaxVelocity - maxv) * 200.0;
 			t1 = Math.min(t1, t1_limit);
-			double t2 = 60 - Math.sqrt(r2 - (t1 * t1));
+			double core = r2 - ((t1 - 60) * (t1 - 60));
+			if (core < 0) {
+				return null;
+			}
+			double t2 = 60 - Math.sqrt(core);
 			minNextV = maxv + (t1 + t2 - 60.0) * sarjMaxAcceleration;
+			if (DEBUG) {
+				System.out.println(" => #(t1=" + t1 + ", t2=" + t2 + ", r^2="
+						+ r2 + ")");
+			}
 		}
+		// System.out.println("  => ###(" + minNextV + "," + maxNextV + ")");
 		return new Range(Math.max(-sarjMaxVelocity, minNextV), Math.min(
-				sarjMaxAcceleration, maxNextV));
+				sarjMaxVelocity, maxNextV));
 	}
 
 	public static class Range {
@@ -104,9 +146,9 @@ public class CPSSolver {
 
 		public boolean isEmpty() {
 			if (min > max)
-				return false;
-			else
 				return true;
+			else
+				return false;
 		}
 
 		public boolean contains(double t) {
@@ -133,6 +175,10 @@ public class CPSSolver {
 
 		public double getMidValue() {
 			return (min + max) / 2.0;
+		}
+
+		public String toString() {
+			return "(" + min + "," + max + ")";
 		}
 	}
 
