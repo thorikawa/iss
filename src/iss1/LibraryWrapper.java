@@ -3,19 +3,11 @@ package iss1;
 import iss.SingleState;
 import iss.State;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
 public class LibraryWrapper {
-
-	private BufferedReader reader;
 
 	private ConstraintsChecker checker;
 
 	public LibraryWrapper() {
-		InputStreamReader isr = new InputStreamReader(System.in);
-		reader = new BufferedReader(isr);
-
 		ISSVis.main(new String[0]);
 		checker = new ConstraintsChecker();
 	}
@@ -27,10 +19,21 @@ public class LibraryWrapper {
 		System.out.flush();
 	}
 
-	private static final int RENDER_LIBRARY = 0;
-
 	public double evaluate(State state, int minute, double beta, double yaw) {
-		double[] out = this.library(state, minute, beta, yaw);
+		double[] input = getInputParameter(state.getRotations(), minute, beta,
+				yaw);
+		double[] out = checker.evaluateSingleState(input);
+		return calcScore(out);
+	}
+
+	public double evaluate(double[] rotations, int minute, double beta,
+			double yaw) {
+		double[] input = getInputParameter(rotations, minute, beta, yaw);
+		double[] out = checker.evaluateSingleState(input);
+		return calcScore(out);
+	}
+
+	private static double calcScore(double[] out) {
 		double totalPower = 0.0;
 		for (int i = 0; i < 8; i++) {
 			double power = 0.0;
@@ -56,17 +59,9 @@ public class LibraryWrapper {
 
 	}
 
-	public double[] library(State state, int minute, double beta, double yaw) {
-		double[] input = getInputParameter(state, minute, beta, yaw);
-		double[] ret = checker.evaluateSingleState(input);
-		return ret;
-	}
-
-	private static double[] getInputParameter(State state, int minute,
+	private static double[] getInputParameter(double[] rotations, int minute,
 			double beta, double yaw) {
 		double alpha = 360.0 * minute / 92.0;
-		double[] rotations = state.getRotations();
-
 		double[] input = new double[14];
 		input[1] = alpha;
 		input[2] = beta;

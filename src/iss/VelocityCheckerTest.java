@@ -1,6 +1,6 @@
 package iss;
 
-public class CPSSolverTest {
+public class VelocityCheckerTest {
 	public static void main(String[] args) {
 		double[][] rotations = {
 				{ 0.00, 355.77, 160.25, 22.71, 199.75, 337.59, 199.99, 340.30,
@@ -195,6 +195,6 @@ public class CPSSolverTest {
 		for (int i = 0; i < rotations.length; i++) {
 			input[i] = rotations[i][0];
 		}
-		CPSSolver.solveSarj(input, 0.0);
+		VelocityChecker.solveSarj(input, 0.0);
 	}
 }

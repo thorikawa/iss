@@ -1,15 +1,44 @@
 package iss;
 
-public class CPSSolver {
+public class VelocityChecker {
 	public static final double sarjMaxVelocity = 0.15;
 
 	public static final double sarjMaxAcceleration = 0.005;
 
-	public static final boolean DEBUG = true;
+	public static final double CHECK_DELTA = 0.01;
 
-	// TODO Need to Test
+	public static boolean DEBUG = false;
+
+	/**
+	 * Find possible velocities array for given rotations. If there is no
+	 * possible velocities, return null.
+	 * 
+	 * @param rotations
+	 * @return
+	 */
+	public static double[] findPossibleVelocities(double[] rotations) {
+		for (double initial1 = -VelocityChecker.sarjMaxVelocity; initial1 < VelocityChecker.sarjMaxVelocity; initial1 += CHECK_DELTA) {
+			double[] velocities = VelocityChecker
+					.solveSarj(rotations, initial1);
+			if (velocities != null) {
+				return velocities;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * If there is no answer, return null. Otherwise return one possible answer.
+	 * 
+	 * @param rotations
+	 * @param initial
+	 * @return
+	 */
 	public static double[] solveSarj(double[] rotations, double initial) {
 
+		if (DEBUG) {
+			System.out.println("===initial speed:" + initial);
+		}
 		Range ranges[] = new Range[rotations.length + 1];
 		ranges[0] = new Range(initial, initial);
 		ranges[rotations.length] = new Range(initial, initial);
@@ -18,19 +47,26 @@ public class CPSSolver {
 		// forward check
 		for (int i = 1; i < rotations.length; i++) {
 			ranges[i] = step(ranges[i - 1], rotations[i - 1], rotations[i]);
-			System.out.println(ranges[i]);
+			if (DEBUG) {
+				System.out.println(ranges[i]);
+			}
 			if (ranges[i] == null || ranges[i].isEmpty()) {
 				ok = false;
 				break;
 			}
 		}
 		if (!ok) {
-			System.err.println("Forward check fail");
+			if (DEBUG) {
+				System.out.println("Forward check fail");
+			}
 			return null;
 		}
 		// final check of forward check = cyclic check
 		if (!ranges[rotations.length - 1].contains(initial)) {
-			System.err.println("This is not cyclic");
+			if (DEBUG) {
+				System.out
+						.println("[Warning] Forward check fail. This is not cyclic. It cannot end up with initial speed.");
+			}
 			return null;
 		}
 		// backword check
@@ -42,7 +78,10 @@ public class CPSSolver {
 			} else {
 				srcRotation = rotations[i];
 			}
-			Range backwardRange = step(ranges[i], srcRotation, rotations[i - 1]);
+			// XXXXXXXXXXXXXXXXXXXX 第二引数と第三引数の順番怪しい・・・
+			// Range backwardRange = step(ranges[i], srcRotation, rotations[i -
+			// 1]);
+			Range backwardRange = step(ranges[i], rotations[i - 1], srcRotation);
 			if (backwardRange == null || backwardRange.isEmpty()) {
 				ok = false;
 				break;
@@ -54,11 +93,15 @@ public class CPSSolver {
 			}
 		}
 		if (!ok) {
-			System.err.println("Backward check fail");
+			if (DEBUG) {
+				System.out.println("Backward check fail");
+			}
 			return null;
 		}
 
-		System.err.println("CSP solved");
+		if (DEBUG) {
+			System.out.println("CSP solved");
+		}
 		double res[] = new double[rotations.length];
 		for (int i = 0; i < rotations.length; i++) {
 			res[i] = ranges[i].getMidValue();
@@ -70,7 +113,10 @@ public class CPSSolver {
 		double maxNextV, minNextV;
 		double s = ISSUtils.determineShift(angle1, angle2);
 
-		System.out.println(" ##angle:" + angle1 + "-" + angle2 + "=" + s);
+		if (DEBUG) {
+			System.out.println(" ##angle:[" + angle1 + "]-[" + angle2 + "]="
+					+ s);
+		}
 		{
 			// 下がってから上がるパターン
 			// 初期値スピードで、これ以上小さくなると解がなくなる境界値=どんなにがんばってもたどり着かない
