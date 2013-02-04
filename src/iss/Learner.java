@@ -100,8 +100,10 @@ public class Learner {
 	public void learn(State initialState) {
 
 		try {
+			osw.write("beta=");
 			osw.write(String.valueOf(this.beta));
 			osw.write("\n");
+			osw.write("yaw=");
 			osw.write(String.valueOf(this.yaw));
 			osw.write("\n");
 			osw.flush();
@@ -112,20 +114,28 @@ public class Learner {
 
 		this.initialState = initialState;
 		State state = initialState;
-		for (int i = 0; i < 92; i++) {
-			// if (i != 0) {
-			// state = this.getNextMaxState(state, i - 1);
-			state = this.gradientDescent(state, i);
-			// }
-			try {
+		try {
+			osw.write("{\n");
+			for (int i = 0; i < 92; i++) {
+				// if (i != 0) {
+				// state = this.getNextMaxState(state, i - 1);
+				state = this.gradientDescent(state, i);
+				// }
+				osw.write("{ ");
 				osw.write(state.toString());
+				osw.write("}");
+				if (i != 91) {
+					osw.write(",");
+				}
 				osw.write("\n");
 				osw.flush();
-			} catch (IOException e) {
-				e.printStackTrace();
+				LibraryWrapper.proceed(state);
 			}
-			LibraryWrapper.proceed(state);
+			osw.write("\n}");
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+
 	}
 
 	private State getNextMaxState(State currentState, int currentMinute) {

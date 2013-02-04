@@ -13,7 +13,7 @@ public class SingleState {
 
 	private double velocity;
 
-	DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00000");
+	DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.0000000");
 
 	public SingleState(double rotation, double velocity) {
 		this.rotation = ISSUtils.normalizeDegree(rotation);
