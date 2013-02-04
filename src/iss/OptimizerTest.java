@@ -9,10 +9,6 @@ public class OptimizerTest {
 						160.01, 19.98 },
 				{ 7.64, 349.45, 160.02, 20.70, 199.98, 339.66, 199.99, 340.02,
 						160.01, 19.98 },
-				{ 16.64, 349.45, 160.02, 20.70, 199.98, 339.66, 199.99, 340.02,
-						160.01, 19.98 },
-				{ 16.64, 349.45, 160.02, 20.70, 199.98, 339.66, 199.99, 340.02,
-						160.01, 19.98 },
 				{ 11.55, 347.49, 160.02, 20.40, 199.98, 339.89, 199.99, 340.02,
 						160.01, 19.98 },
 				{ 15.46, 348.03, 160.02, 20.71, 199.98, 340.09, 199.99, 340.02,
@@ -191,11 +187,27 @@ public class OptimizerTest {
 						162.20, 19.89 },
 				{ 328.75, 33.28, 163.88, 5.98, 197.89, 342.41, 197.91, 344.19,
 						162.20, 18.71 } };
+		double beta = -70;
 		double input[] = new double[rotations.length];
 		for (int i = 0; i < rotations.length; i++) {
 			input[i] = rotations[i][0];
 		}
 		Optimizer optimizer = new Optimizer();
-		optimizer.optimize(rotations, 75, 0);
+		double[][] answer = optimizer.optimize(rotations, beta, 0);
+		for (double[] a : answer) {
+			System.out.print("{");
+			for (double b : a) {
+				System.out.print(b + ",");
+			}
+			System.out.println("},");
+		}
+
+		/*
+		 * int target = 3; double input2[] = new double[rotations.length]; for
+		 * (int i = 0; i < rotations.length - 1; i++) { input2[i] =
+		 * rotations[i][target]; System.out.println(input2[i]); }
+		 * System.out.println("==========="); optimizer.smooth(input2, 80.0);
+		 * for (double a : input2) { System.out.println(a); }
+		 */
 	}
 }

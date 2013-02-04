@@ -1,13 +1,19 @@
 package iss;
 
 public class VelocityChecker {
-	public static final double sarjMaxVelocity = 0.15;
 
-	public static final double sarjMaxAcceleration = 0.005;
+	private double maxVelocity = 0.15;
+
+	private double maxAcceleration = 0.005;
 
 	public static final double CHECK_DELTA = 0.01;
 
 	public static boolean DEBUG = false;
+
+	public VelocityChecker(double maxVelocity, double maxAccelaration) {
+		this.maxVelocity = maxVelocity;
+		this.maxAcceleration = maxAccelaration;
+	}
 
 	/**
 	 * Find possible velocities array for given rotations. If there is no
@@ -16,12 +22,19 @@ public class VelocityChecker {
 	 * @param rotations
 	 * @return
 	 */
-	public static double[] findPossibleVelocities(double[] rotations) {
-		for (double initial1 = -VelocityChecker.sarjMaxVelocity; initial1 < VelocityChecker.sarjMaxVelocity; initial1 += CHECK_DELTA) {
-			double[] velocities = VelocityChecker
-					.solveSarj(rotations, initial1);
-			if (velocities != null) {
-				return velocities;
+	public double[] findPossibleVelocities(double[] rotations) {
+		for (double initial = 0.0; initial < maxVelocity; initial += CHECK_DELTA) {
+			{
+				double[] velocities = this.solveSarj(rotations, initial);
+				if (velocities != null) {
+					return velocities;
+				}
+			}
+			if (initial != 0.0) {
+				double[] velocities = this.solveSarj(rotations, -initial);
+				if (velocities != null) {
+					return velocities;
+				}
 			}
 		}
 		return null;
@@ -34,7 +47,7 @@ public class VelocityChecker {
 	 * @param initial
 	 * @return
 	 */
-	public static double[] solveSarj(double[] rotations, double initial) {
+	public double[] solveSarj(double[] rotations, double initial) {
 
 		if (DEBUG) {
 			System.out.println("===initial speed:" + initial);
@@ -86,7 +99,13 @@ public class VelocityChecker {
 				ok = false;
 				break;
 			}
+			if (DEBUG) {
+				System.out.println("beforeIntersect:" + backwardRange);
+			}
 			ranges[i - 1] = backwardRange.intersect(ranges[i - 1]);
+			if (DEBUG) {
+				System.out.println("afterIntersect:" + ranges[i - 1]);
+			}
 			if (ranges[i - 1] == null || ranges[i - 1].isEmpty()) {
 				ok = false;
 				break;
@@ -105,17 +124,19 @@ public class VelocityChecker {
 		double res[] = new double[rotations.length];
 		for (int i = 0; i < rotations.length; i++) {
 			res[i] = ranges[i].getMidValue();
+			// res[i] = ranges[i].getMinimumAbsoluteValue();
 		}
 		return res;
 	}
 
-	public static Range step(Range velocityRange, double angle1, double angle2) {
+	public Range step(Range velocityRange, double angle1, double angle2) {
 		double maxNextV, minNextV;
 		double s = ISSUtils.determineShift(angle1, angle2);
 
 		if (DEBUG) {
 			System.out.println(" ##angle:[" + angle1 + "]-[" + angle2 + "]="
 					+ s);
+			System.out.println(" ##srcrange:" + velocityRange);
 		}
 		{
 			// 下がってから上がるパターン
@@ -131,7 +152,7 @@ public class VelocityChecker {
 			}
 			double t1 = 60 - Math.sqrt(r2 / 2.0);
 			// vの速度拘束条件による制約
-			double t1_limit = (minv + sarjMaxVelocity) * 200.0;
+			double t1_limit = (minv + maxVelocity) * 200.0;
 			if (DEBUG) {
 				System.out.println(" *minv=" + minv + ",t1=" + t1
 						+ ",t1_limit=" + t1_limit);
@@ -142,7 +163,7 @@ public class VelocityChecker {
 				return null;
 			}
 			double t2 = 60 - Math.sqrt(core);
-			maxNextV = minv + (60.0 - t1 - t2) * sarjMaxAcceleration;
+			maxNextV = minv + (60.0 - t1 - t2) * maxAcceleration;
 			if (DEBUG) {
 				System.out.println(" => #(t1=" + t1 + ", t2=" + t2 + ", r^2="
 						+ r2 + ")");
@@ -162,22 +183,22 @@ public class VelocityChecker {
 			}
 			double t1 = 60 - Math.sqrt(r2 / 2.0);
 			// vの速度拘束条件による制約
-			double t1_limit = (sarjMaxVelocity - maxv) * 200.0;
+			double t1_limit = (maxVelocity - maxv) * 200.0;
 			t1 = Math.min(t1, t1_limit);
 			double core = r2 - ((t1 - 60) * (t1 - 60));
 			if (core < 0) {
 				return null;
 			}
 			double t2 = 60 - Math.sqrt(core);
-			minNextV = maxv + (t1 + t2 - 60.0) * sarjMaxAcceleration;
+			minNextV = maxv + (t1 + t2 - 60.0) * maxAcceleration;
 			if (DEBUG) {
 				System.out.println(" => #(t1=" + t1 + ", t2=" + t2 + ", r^2="
 						+ r2 + ")");
 			}
 		}
 		// System.out.println("  => ###(" + minNextV + "," + maxNextV + ")");
-		return new Range(Math.max(-sarjMaxVelocity, minNextV), Math.min(
-				sarjMaxVelocity, maxNextV));
+		return new Range(Math.max(-maxVelocity, minNextV), Math.min(
+				maxVelocity, maxNextV));
 	}
 
 	public static class Range {
@@ -221,6 +242,16 @@ public class VelocityChecker {
 
 		public double getMidValue() {
 			return (min + max) / 2.0;
+		}
+
+		public double getMinimumAbsoluteValue() {
+			if (min > 0.0) {
+				return min * 0.7 + max * 0.3;
+			} else if (max < 0.0) {
+				return max * 0.7 + min * 0.3;
+			} else {
+				return 0.0;
+			}
 		}
 
 		public String toString() {

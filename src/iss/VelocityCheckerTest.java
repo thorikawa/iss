@@ -195,6 +195,7 @@ public class VelocityCheckerTest {
 		for (int i = 0; i < rotations.length; i++) {
 			input[i] = rotations[i][0];
 		}
-		VelocityChecker.solveSarj(input, 0.0);
+		VelocityChecker velocityChecker = new VelocityChecker(0.15, 0.005);
+		velocityChecker.solveSarj(input, 0.0);
 	}
 }
