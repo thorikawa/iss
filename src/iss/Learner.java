@@ -150,7 +150,7 @@ public class Learner {
 
 			double score = libraryWrapper1.evaluate(nextState,
 					currentMinute + 1, this.beta, this.yaw);
-			System.err.println(score);
+			//System.err.println(score);
 
 			if (maxState == null || maxScore < score) {
 				maxScore = score;
@@ -176,13 +176,13 @@ public class Learner {
 	private State gradientDescent(final State startState, final int minute) {
 		State startStateCopy = startState.copy();
 		for (int k = 0; k < ENTIRE_LOOP_COUNT; k++) {
-			System.err.println("loop1:" + k);
+			System.out.println("loop1:" + k);
 			for (int i = 0; i < 10; i++) {
 				System.out.println(" loop2 roration:" + i);
 				SingleState startTargetState = startStateCopy.getSingleState(i);
 				for (int loop = 0; loop < MAX_SINGLE_LOOP_COUNT; loop++) {
-					System.err.println("  loop3:" + loop);
-					System.err.println(startState);
+					//System.err.println("  loop3:" + loop);
+					//System.err.println(startState);
 					final State state1 = startState.copy();
 					final State state2 = startState.copy();
 					state1.getSingleState(i).addRotation(DIFF);
@@ -223,13 +223,14 @@ public class Learner {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					System.err.println(score1 + ":" + score2);
+					//System.err.println(score1 + ":" + score2);
 					double d = (score1 - score2) / (DIFF + DIFF);
 					if (Math.abs(d) < THRESHOLD) {
 						break;
 					}
 					double dDegree = ALPHA * d;
 					SingleState targetState = startState.getSingleState(i);
+					/*
 					if (minute != 0) {
 						if (ISSUtils.minDegreeAbs(targetState.getRotation()
 								+ dDegree, startTargetState.getRotation()) > bigLimit[i]) {
@@ -237,6 +238,7 @@ public class Learner {
 							break;
 						}
 					}
+					*/
 					targetState.addRotation(dDegree);
 				}
 			}
