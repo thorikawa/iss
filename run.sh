@@ -1,1 +1,1 @@
-java -Xmx512m -jar ISSVis.jar -exec ./universe.py -rendering
+java -Xmx512m -jar ISSVis.jar -exec "java -classpath bin ISS" -beta -70
