@@ -130,10 +130,11 @@ public class Learner {
 		try {
 			osw.write("{\n");
 			for (int i = 0; i < 92; i++) {
-				// if (i != 0) {
-				// state = this.getNextMaxState(state, i - 1);
-				state = this.gradientDescent(state, i);
-				// }
+				if (DESCENT_TYPE == DESCENT_TYPE_RANDOM) {
+					state = this.randomGradientDescent(state, i);
+				} else {
+					state = this.gradientDescent(state, i);
+				}
 				osw.write("{ ");
 				osw.write(state.toString());
 				osw.write("}");
@@ -218,14 +219,168 @@ public class Learner {
 					}
 					double dDegree = ALPHA * d;
 					SingleState targetState = startState.getSingleState(i);
-					/*
-					 * if (minute != 0) { if
-					 * (ISSUtils.minDegreeAbs(targetState.getRotation() +
-					 * dDegree, startTargetState.getRotation()) > bigLimit[i]) {
-					 * System.err.println("reach limit..."); break; } }
-					 */
 					targetState.addRotation(dDegree);
 				}
+			}
+		}
+		return startState;
+	}
+
+	private static final int DIRECTION_PLUS = 1;
+
+	private static final int DIRECTION_MINUS = 2;
+	
+	private static final int MAX_OPPOSITE_DIRECTION_COUNT = 10;
+
+	/**
+	 * ***Warning*** this method break startState!!
+	 * 
+	 * @param startState
+	 * @param minute
+	 * @param targetIndex
+	 * @return
+	 */
+	private State gradientDescentSingle(final State startState,
+			final int minute, int targetIndex) {
+		// reduce the loop count, since we start with some start points.
+		int prevDirection = -1;
+		int oppositeDirectionCount = 0;
+
+		for (int loop = 0; loop < MAX_SINGLE_LOOP_COUNT / 2; loop++) {
+			final State state1 = startState.copy();
+			final State state2 = startState.copy();
+			state1.getSingleState(targetIndex).addRotation(DIFF);
+			state2.getSingleState(targetIndex).addRotation(-DIFF);
+			FutureTask<Double> task1 = new FutureTask<Double>(
+					new Callable<Double>() {
+						@Override
+						public Double call() throws Exception {
+							double score1 = libraryWrapper1
+									.evaluate(state1, minute,
+											Learner.this.beta, Learner.this.yaw);
+							return score1;
+						}
+					});
+			FutureTask<Double> task2 = new FutureTask<Double>(
+					new Callable<Double>() {
+						@Override
+						public Double call() throws Exception {
+							double score2 = libraryWrapper2
+									.evaluate(state2, minute,
+											Learner.this.beta, Learner.this.yaw);
+							return score2;
+						}
+					});
+			double score1 = 0;
+			double score2 = 0;
+			try {
+				Thread thread1 = new Thread(task1);
+				Thread thread2 = new Thread(task2);
+				thread1.start();
+				thread2.start();
+				score1 = task1.get();
+				score2 = task2.get();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			// System.err.println(score1 + ":" + score2);
+			double d = (score1 - score2) / (DIFF + DIFF);
+			if (Math.abs(d) < THRESHOLD) {
+				break;
+			}
+			if (d > 0) {
+				if (prevDirection == DIRECTION_MINUS) {
+					oppositeDirectionCount++;
+				} else {
+					oppositeDirectionCount = 0;
+				}
+				prevDirection = DIRECTION_PLUS;
+			} else { // d < 0
+				if (prevDirection == DIRECTION_PLUS) {
+					oppositeDirectionCount++;
+				} else {
+					oppositeDirectionCount = 0;
+				}
+				prevDirection = DIRECTION_MINUS;
+			}
+			if (oppositeDirectionCount > MAX_OPPOSITE_DIRECTION_COUNT) {
+				break;
+			}
+			double dDegree = ALPHA * d;
+			SingleState targetState = startState.getSingleState(targetIndex);
+			targetState.addRotation(dDegree);
+		}
+		return startState;
+	}
+
+	private State randomGradientDescent(State startState, final int minute) {
+		for (int k = 0; k < ENTIRE_LOOP_COUNT; k++) {
+			System.out.println("loop1:" + k);
+			for (int i = 0; i < 10; i++) {
+				System.out.println(" loop2 roration:" + i);
+
+				double score0 = libraryWrapper1.evaluate(startState, minute,
+						Learner.this.beta, Learner.this.yaw);
+
+				State maxState = startState;
+				double maxScore = score0;
+
+				double startRotation = startState.getSingleState(i)
+						.getRotation();
+				State input1 = startState.copy();
+				gradientDescentSingle(input1, minute, i); // input1 is modified
+				double score1 = libraryWrapper1.evaluate(input1, minute,
+						Learner.this.beta, Learner.this.yaw);
+				System.out.println("output1: rotation="
+						+ input1.getSingleState(i).getRotation() + ", score="
+						+ score1);
+				if (score1 > maxScore) {
+					maxState = input1;
+					maxScore = score1;
+				}
+
+				State input2 = input1.copy();
+				double rotation1 = input1.getSingleState(i).getRotation();
+				double shift1 = ISSUtils.determineShift(startRotation,
+						rotation1);
+				if (shift1 >= 0) {
+					input2.getSingleState(i).addRotation(DIFF * 10);
+				} else {
+					input2.getSingleState(i).addRotation(-DIFF * 10);
+				}
+				gradientDescentSingle(input2, minute, i); // input2 is modified
+				double score2 = libraryWrapper1.evaluate(input2, minute,
+						Learner.this.beta, Learner.this.yaw);
+				System.out.println("output2: rotation="
+						+ input2.getSingleState(i).getRotation() + ", score="
+						+ score2);
+				if (score2 > maxScore) {
+					maxState = input2;
+					maxScore = score2;
+				}
+
+				State input3 = input2.copy();
+				if (shift1 >= 0) {
+					input3.getSingleState(i).addRotation(DIFF * 10);
+				} else {
+					input3.getSingleState(i).addRotation(-DIFF * 10);
+				}
+				gradientDescentSingle(input3, minute, i); // input3 is modified
+				double score3 = libraryWrapper1.evaluate(input3, minute,
+						Learner.this.beta, Learner.this.yaw);
+				System.out.println("output3: rotation="
+						+ input3.getSingleState(i).getRotation() + ", score="
+						+ score3);
+				if (score3 > maxScore) {
+					maxState = input3;
+					maxScore = score3;
+				}
+
+				startState = maxState;
 			}
 		}
 		return startState;
