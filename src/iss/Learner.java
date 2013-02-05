@@ -16,19 +16,32 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 public class Learner {
-	double beta;
+	private double beta;
 
-	double yaw;
+	private double yaw;
 
 	private State initialState;
 
-	static iss1.LibraryWrapper libraryWrapper1 = new iss1.LibraryWrapper();
+	private static iss1.LibraryWrapper libraryWrapper1 = new iss1.LibraryWrapper();
 
-	static iss2.LibraryWrapper libraryWrapper2 = new iss2.LibraryWrapper();
+	private static iss2.LibraryWrapper libraryWrapper2 = new iss2.LibraryWrapper();
 
-	static String outFileName = "out2.txt";
+	private static String outFileName = "out2.txt";
 
 	private OutputStreamWriter osw;
+
+	/**
+	 * basic steepest descent method.
+	 */
+	private static final int DESCENT_TYPE_NORMAL = 1;
+
+	/**
+	 * improved steepest descent method. to avoid local optima, use random start
+	 * points.
+	 */
+	private static final int DESCENT_TYPE_RANDOM = 2;
+
+	private static int DESCENT_TYPE = DESCENT_TYPE_NORMAL;
 
 	public static void main(String[] args) {
 
@@ -51,8 +64,8 @@ public class Learner {
 			outFileName = args[1];
 		}
 		if (args.length == 3) {
-			yaw = Double.parseDouble(args[1]);
-			outFileName = args[2];
+			outFileName = args[1];
+			DESCENT_TYPE = Integer.parseInt(args[2]);
 		}
 
 		libraryWrapper1.init(beta, yaw);
@@ -138,40 +151,15 @@ public class Learner {
 
 	}
 
-	private State getNextMaxState(State currentState, int currentMinute) {
-		State maxState = null;
-		double maxScore = 0;
-		ActionIterable actionIterable = new ActionIterable();
-		for (Action action : actionIterable) {
-			State nextState = action.apply(currentState);
-			if (!this.canBeCyclic(nextState, currentMinute + 1)) {
-				continue;
-			}
+	private static final double DIFF = 0.1;
 
-			double score = libraryWrapper1.evaluate(nextState,
-					currentMinute + 1, this.beta, this.yaw);
-			//System.err.println(score);
+	private static final double ALPHA = 0.001;
 
-			if (maxState == null || maxScore < score) {
-				maxScore = score;
-				maxState = nextState;
-			}
-		}
-		return maxState;
-	}
+	private static final double THRESHOLD = 0.1;
 
-	static final double DIFF = 0.1;
+	private static final int ENTIRE_LOOP_COUNT = 10;
 
-	static final double ALPHA = 0.001;
-
-	static final double THRESHOLD = 0.1;
-
-	static final int ENTIRE_LOOP_COUNT = 10;
-
-	static final int MAX_SINGLE_LOOP_COUNT = 100;
-
-	static final double bigLimit[] = { 9.0, 9.0, 15.0, 15.0, 15.0, 15.0, 15.0,
-			15.0, 15.0, 15.0 };
+	private static final int MAX_SINGLE_LOOP_COUNT = 100;
 
 	private State gradientDescent(final State startState, final int minute) {
 		State startStateCopy = startState.copy();
@@ -181,8 +169,8 @@ public class Learner {
 				System.out.println(" loop2 roration:" + i);
 				SingleState startTargetState = startStateCopy.getSingleState(i);
 				for (int loop = 0; loop < MAX_SINGLE_LOOP_COUNT; loop++) {
-					//System.err.println("  loop3:" + loop);
-					//System.err.println(startState);
+					// System.err.println("  loop3:" + loop);
+					// System.err.println(startState);
 					final State state1 = startState.copy();
 					final State state2 = startState.copy();
 					state1.getSingleState(i).addRotation(DIFF);
@@ -223,7 +211,7 @@ public class Learner {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					//System.err.println(score1 + ":" + score2);
+					// System.err.println(score1 + ":" + score2);
 					double d = (score1 - score2) / (DIFF + DIFF);
 					if (Math.abs(d) < THRESHOLD) {
 						break;
@@ -231,14 +219,11 @@ public class Learner {
 					double dDegree = ALPHA * d;
 					SingleState targetState = startState.getSingleState(i);
 					/*
-					if (minute != 0) {
-						if (ISSUtils.minDegreeAbs(targetState.getRotation()
-								+ dDegree, startTargetState.getRotation()) > bigLimit[i]) {
-							System.err.println("reach limit...");
-							break;
-						}
-					}
-					*/
+					 * if (minute != 0) { if
+					 * (ISSUtils.minDegreeAbs(targetState.getRotation() +
+					 * dDegree, startTargetState.getRotation()) > bigLimit[i]) {
+					 * System.err.println("reach limit..."); break; } }
+					 */
 					targetState.addRotation(dDegree);
 				}
 			}
