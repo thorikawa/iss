@@ -20,8 +20,6 @@ public class Learner {
 
 	private double yaw;
 
-	private State initialState;
-
 	private static iss1.LibraryWrapper libraryWrapper1 = new iss1.LibraryWrapper();
 
 	private static iss2.LibraryWrapper libraryWrapper2 = new iss2.LibraryWrapper();
@@ -125,7 +123,7 @@ public class Learner {
 			e1.printStackTrace();
 		}
 
-		this.initialState = initialState;
+		// this.initialState = initialState;
 		State state = initialState;
 		try {
 			osw.write("{\n");
@@ -314,14 +312,27 @@ public class Learner {
 			double dDegree = ALPHA * d;
 			SingleState targetState = startState.getSingleState(targetIndex);
 			targetState.addRotation(dDegree);
-			if (targetIndex < 2 && minute > 0) {
-				double shift = ISSUtils.determineShift(baseRotation, targetState.getRotation());
-				if (targetIndex == 0 && shift < -9.0) {
-					// もどりすぎ
-					break;
-				} else if (targetIndex == 1 && shift > 9.0) {
-					// すすみすぎ
-					break;
+			if (minute > 0) {
+				// range check
+				double shift = ISSUtils.determineShift(baseRotation,
+						targetState.getRotation());
+				if (targetIndex == 0) {
+					// SARJ1
+					if (shift < -9.0 || shift > 18.0) {
+						// SARJ1 is usually increased.
+						break;
+					}
+				} else if (targetIndex == 1) {
+					// SARJ1
+					if (shift > 9.0 || shift < -18.0) {
+						// SARJ1 is usually decreased.
+						break;
+					}
+				} else {
+					if (shift > 15.0 || shift < -15.0) {
+						// BGA
+						break;
+					}
 				}
 			}
 		}
@@ -329,8 +340,9 @@ public class Learner {
 	}
 
 	private State randomGradientDescent(State startState, final int minute) {
-		State startStateCopy = startState.copy();
+		final State startStateCopy = startState.copy();
 
+		// improve "startState"
 		for (int k = 0; k < ENTIRE_LOOP_COUNT; k++) {
 			System.out.println("loop1:" + k);
 			for (int i = 0; i < 10; i++) {
@@ -347,16 +359,42 @@ public class Learner {
 				State maxState = startState;
 				double maxScore = score0;
 
-				State initialState = startState.copy();
-
 				int maxRandomLoop = 1;
 				if (i < 2) {
 					maxRandomLoop = 3;
 				}
 
+				State preResultState = startState;
 				for (int randomLoop = 0; randomLoop < maxRandomLoop; randomLoop++) {
 
-					State input = initialState.copy();
+					State input = startState.copy();
+					// leap 1.0*randomLoopCount
+					double preRotation = preResultState.getSingleState(i)
+							.getRotation();
+					if (i == 0) {
+						double preAdded = ISSUtils.determineShift(startState
+								.getSingleState(i).getRotation(), preRotation);
+						if (preAdded < 0) {
+							input.getSingleState(i).addRotation(
+									DIFF * 10 * randomLoop);
+						} else {
+							input.getSingleState(i).addRotation(
+									preAdded + DIFF * 10 * randomLoop);
+						}
+					} else if (i == 1) {
+						double preAdded = ISSUtils.determineShift(startState
+								.getSingleState(i).getRotation(), preRotation);
+						if (preAdded > 0) {
+							input.getSingleState(i).addRotation(
+									-DIFF * 10 * randomLoop);
+						} else {
+							input.getSingleState(i).addRotation(
+									preAdded - DIFF * 10 * randomLoop);
+						}
+					}
+
+					// System.out.println("try:input rotation="+
+					// input.getSingleState(i).getRotation());
 					gradientDescentSingle(input, minute, i, baseRotation); // input
 																			// is
 					// modified
@@ -369,11 +407,7 @@ public class Learner {
 						maxState = input;
 						maxScore = score;
 					}
-					if (i == 0) {
-						initialState.getSingleState(i).addRotation(DIFF * 10);
-					} else if (i == 1) {
-						initialState.getSingleState(i).addRotation(-DIFF * 10);
-					}
+					preResultState = input;
 				}
 
 				startState = maxState;
@@ -381,23 +415,6 @@ public class Learner {
 		}
 		return startState;
 	}
-
-	private boolean canBeCyclic(State state, int minute) {
-		double initials[] = this.initialState.getRotations();
-		double rotations[] = state.getRotations();
-		for (int i = 0; i < 2; i++) {
-			if (ISSUtils.minDegreeAbs(rotations[i], initials[i]) > (92 - minute) * 4.5) {
-				return false;
-			}
-		}
-		for (int i = 2; i < 10; i++) {
-			if (ISSUtils.minDegreeAbs(rotations[i], initials[i]) > (92 - minute) * 8.7) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 }
 
 class ActionIterable implements Iterable<Action> {
