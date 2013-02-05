@@ -241,11 +241,12 @@ public class Learner {
 	 * @return
 	 */
 	private State gradientDescentSingle(final State startState,
-			final int minute, int targetIndex) {
-		// reduce the loop count, since we start with some start points.
+			final int minute, int targetIndex, double baseRotation) {
+
 		int prevDirection = -1;
 		int oppositeDirectionCount = 0;
 
+		// reduce the loop count, since we start with some start points.
 		for (int loop = 0; loop < MAX_SINGLE_LOOP_COUNT / 2; loop++) {
 			final State state1 = startState.copy();
 			final State state2 = startState.copy();
@@ -313,15 +314,32 @@ public class Learner {
 			double dDegree = ALPHA * d;
 			SingleState targetState = startState.getSingleState(targetIndex);
 			targetState.addRotation(dDegree);
+			if (targetIndex < 2 && minute > 0) {
+				double shift = ISSUtils.determineShift(baseRotation, targetState.getRotation());
+				if (targetIndex == 0 && shift < -9.0) {
+					// もどりすぎ
+					break;
+				} else if (targetIndex == 1 && shift > 9.0) {
+					// すすみすぎ
+					break;
+				}
+			}
 		}
 		return startState;
 	}
 
 	private State randomGradientDescent(State startState, final int minute) {
+		State startStateCopy = startState.copy();
+
 		for (int k = 0; k < ENTIRE_LOOP_COUNT; k++) {
 			System.out.println("loop1:" + k);
 			for (int i = 0; i < 10; i++) {
 				System.out.println(" loop2 roration:" + i);
+
+				// Consider how far from the initial point the learned rotation
+				// is.
+				double baseRotation = startStateCopy.getSingleState(i)
+						.getRotation();
 
 				double score0 = libraryWrapper1.evaluate(startState, minute,
 						Learner.this.beta, Learner.this.yaw);
@@ -339,8 +357,9 @@ public class Learner {
 				for (int randomLoop = 0; randomLoop < maxRandomLoop; randomLoop++) {
 
 					State input = initialState.copy();
-					gradientDescentSingle(input, minute, i); // input is
-																// modified
+					gradientDescentSingle(input, minute, i, baseRotation); // input
+																			// is
+					// modified
 					double score = libraryWrapper1.evaluate(input, minute,
 							Learner.this.beta, Learner.this.yaw);
 					System.out.println("output1: rotation="

@@ -15,11 +15,11 @@ public class Optimizer {
 
 	public static final double BGA_MAX_ACC = 0.01;
 
-	private static final int MAX_ITERATION = 2000;
+	private static final int MAX_ITERATION = 50000;
 
 	private static final double DELTA = 0.1;
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private LibraryWrapper libraryWrapper1;
 
@@ -96,11 +96,15 @@ public class Optimizer {
 	public double[] optimize(double[] rotations, int type) {
 		double[] velocities = null;
 		for (int i = 0; i < MAX_ITERATION; i++) {
-			/*
-			 * if (DEBUG) { for (double r : sarjRotations) {
-			 * System.out.print(r); System.out.print(","); }
-			 * System.out.println(); }
-			 */
+
+			if (DEBUG) {
+				for (double r : rotations) {
+					System.out.print(r);
+					System.out.print(",");
+				}
+				System.out.println();
+			}
+
 			VelocityChecker velocityChecker = null;
 			if (type == TYPE_SARJ) {
 				velocityChecker = new VelocityChecker(SARJ_MAX_VEL,
@@ -173,6 +177,9 @@ public class Optimizer {
 				otherIndex = lastIndex;
 			}
 			assert (maxShiftIndex != otherIndex);
+			if (DEBUG) {
+				System.out.println(maxShiftIndex + "+, " + otherIndex + "-");
+			}
 			rotations[maxShiftIndex] = ISSUtils
 					.normalizeDegree(rotations[maxShiftIndex] + DELTA);
 			rotations[otherIndex] = ISSUtils
@@ -196,6 +203,9 @@ public class Optimizer {
 				otherIndex = lastIndex;
 			}
 			assert (maxShiftIndex != otherIndex);
+			if (DEBUG) {
+				System.out.println(maxShiftIndex + "-, " + otherIndex + "+");
+			}
 			rotations[maxShiftIndex] = ISSUtils
 					.normalizeDegree(rotations[maxShiftIndex] - DELTA);
 			rotations[otherIndex] = ISSUtils
