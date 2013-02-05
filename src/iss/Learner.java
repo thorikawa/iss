@@ -229,7 +229,7 @@ public class Learner {
 	private static final int DIRECTION_PLUS = 1;
 
 	private static final int DIRECTION_MINUS = 2;
-	
+
 	private static final int MAX_OPPOSITE_DIRECTION_COUNT = 10;
 
 	/**
@@ -329,55 +329,32 @@ public class Learner {
 				State maxState = startState;
 				double maxScore = score0;
 
-				double startRotation = startState.getSingleState(i)
-						.getRotation();
-				State input1 = startState.copy();
-				gradientDescentSingle(input1, minute, i); // input1 is modified
-				double score1 = libraryWrapper1.evaluate(input1, minute,
-						Learner.this.beta, Learner.this.yaw);
-				System.out.println("output1: rotation="
-						+ input1.getSingleState(i).getRotation() + ", score="
-						+ score1);
-				if (score1 > maxScore) {
-					maxState = input1;
-					maxScore = score1;
+				State initialState = startState.copy();
+
+				int maxRandomLoop = 1;
+				if (i < 2) {
+					maxRandomLoop = 3;
 				}
 
-				State input2 = input1.copy();
-				double rotation1 = input1.getSingleState(i).getRotation();
-				double shift1 = ISSUtils.determineShift(startRotation,
-						rotation1);
-				if (shift1 >= 0) {
-					input2.getSingleState(i).addRotation(DIFF * 10);
-				} else {
-					input2.getSingleState(i).addRotation(-DIFF * 10);
-				}
-				gradientDescentSingle(input2, minute, i); // input2 is modified
-				double score2 = libraryWrapper1.evaluate(input2, minute,
-						Learner.this.beta, Learner.this.yaw);
-				System.out.println("output2: rotation="
-						+ input2.getSingleState(i).getRotation() + ", score="
-						+ score2);
-				if (score2 > maxScore) {
-					maxState = input2;
-					maxScore = score2;
-				}
+				for (int randomLoop = 0; randomLoop < maxRandomLoop; randomLoop++) {
 
-				State input3 = input2.copy();
-				if (shift1 >= 0) {
-					input3.getSingleState(i).addRotation(DIFF * 10);
-				} else {
-					input3.getSingleState(i).addRotation(-DIFF * 10);
-				}
-				gradientDescentSingle(input3, minute, i); // input3 is modified
-				double score3 = libraryWrapper1.evaluate(input3, minute,
-						Learner.this.beta, Learner.this.yaw);
-				System.out.println("output3: rotation="
-						+ input3.getSingleState(i).getRotation() + ", score="
-						+ score3);
-				if (score3 > maxScore) {
-					maxState = input3;
-					maxScore = score3;
+					State input = initialState.copy();
+					gradientDescentSingle(input, minute, i); // input is
+																// modified
+					double score = libraryWrapper1.evaluate(input, minute,
+							Learner.this.beta, Learner.this.yaw);
+					System.out.println("output1: rotation="
+							+ input.getSingleState(i).getRotation()
+							+ ", score=" + score);
+					if (score > maxScore) {
+						maxState = input;
+						maxScore = score;
+					}
+					if (i == 0) {
+						initialState.getSingleState(i).addRotation(DIFF * 10);
+					} else if (i == 1) {
+						initialState.getSingleState(i).addRotation(-DIFF * 10);
+					}
 				}
 
 				startState = maxState;
