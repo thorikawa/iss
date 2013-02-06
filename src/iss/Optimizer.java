@@ -45,7 +45,9 @@ public class Optimizer {
 		}
 		// smooth BGA rotations considering 80 degree constraint
 		for (int i = 2; i < 10; i++) {
-			smooth(trRotations[i], 79.8);
+			// for beta=-73 we use -78.0
+			// for beta=74 we use 79
+			smooth(trRotations[i], 79.0);
 		}
 
 		// never use rotations below
