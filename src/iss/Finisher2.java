@@ -318,6 +318,28 @@ public class Finisher2 {
 							input.getSingleState(i).addRotation(
 									preAdded - DIFF * 10 * randomLoop);
 						}
+					} else {
+						if (randomLoop == 1) {
+							double preAdded = ISSUtils.determineShift(
+									startState.getSingleState(i).getRotation(),
+									preRotation);
+							if (preAdded < 0) {
+								input.getSingleState(i).addRotation(DIFF * 10);
+							} else {
+								input.getSingleState(i).addRotation(
+										preAdded + DIFF * 10);
+							}
+						} else if (randomLoop == 2) {
+							double preAdded = ISSUtils.determineShift(
+									startState.getSingleState(i).getRotation(),
+									preRotation);
+							if (preAdded > 0) {
+								input.getSingleState(i).addRotation(-DIFF * 10);
+							} else {
+								input.getSingleState(i).addRotation(
+										preAdded - DIFF * 10);
+							}
+						}
 					}
 
 					// System.out.println("try:input rotation="+
