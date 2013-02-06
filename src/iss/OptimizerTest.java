@@ -2,7 +2,7 @@ package iss;
 
 public class OptimizerTest {
 	public static void main(String[] args) {
-		double[][] rotations = RawResult.DATA_P74;
+		double[][] rotations = RawResult.DATA_P73;
 		double beta = -70;
 		double input[] = new double[rotations.length];
 		for (int i = 0; i < rotations.length; i++) {
