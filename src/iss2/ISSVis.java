@@ -541,21 +541,12 @@ class ConstraintsChecker {
 		double[] answer = ISSVis.calculateOnePosition(ISSVis.m, ISSVis.toSun,
 				ISSVis.inverse);
 
-		if (minute < -1) {
-			for (int saw = 0; saw < 8; saw++) {
-				double p = 0;
-				for (int str = 0; str < 82; str++) {
-					p += answer[saw]
-							* 104.96
-							/ 41
-							* 1371.3
-							* 0.1
-							* Math.max(0.0,
-									1.0 - answer[8 + saw * 82 + str] * 5);
-				}
-				// p /= 82 ;
-			}
-		}
+		/*
+		 * if (minute < -1) { for (int saw = 0; saw < 8; saw++) { double p = 0;
+		 * for (int str = 0; str < 82; str++) { p += answer[saw] 104.96 / 41
+		 * 1371.3 0.1 Math.max(0.0, 1.0 - answer[8 + saw * 82 + str] * 5); } //
+		 * p /= 82 ; } }
+		 */
 
 		this.lastAns = answer;
 
