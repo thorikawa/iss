@@ -94,7 +94,23 @@ public class Learner {
 			initialState.setSingleState(8, SingleState.ROT_180);
 			initialState.setSingleState(9, SingleState.ZERO);
 		}
-		instance.learn(initialState);
+		if (beta == -71) {
+			double init[] = { 333.0188697, 48.0819379, 161.0557434, 15.3381696,
+					198.9442843, 342.6173437, 198.9556473, 342.6388297,
+					161.0443527, 16.4527820 };
+			for (int i = 0; i < 10; i++) {
+				initialState.setSingleState(i, new SingleState(init[i], 0.0));
+			}
+			instance.learn(initialState, 87);
+		} else if (beta == -74){
+			double init[] = { 262.4395401,99.0065834,162.2878216,358.7792122,197.3887009,0.9170726,178.8468498,339.6334025,180.8935522,16.5799863};
+			for (int i = 0; i < 10; i++) {
+				initialState.setSingleState(i, new SingleState(init[i], 0.0));
+			}
+			instance.learn(initialState, 68);
+		}else {
+			instance.learn(initialState, 0);
+		}
 	}
 
 	public Learner(double beta, double yaw) {
@@ -108,7 +124,7 @@ public class Learner {
 		}
 	}
 
-	public void learn(State initialState) {
+	public void learn(State initialState, final int startMinute) {
 
 		try {
 			osw.write("beta=");
@@ -127,7 +143,7 @@ public class Learner {
 		State state = initialState;
 		try {
 			osw.write("{\n");
-			for (int i = 0; i < 92; i++) {
+			for (int i = startMinute; i < 92; i++) {
 				if (DESCENT_TYPE == DESCENT_TYPE_RANDOM) {
 					state = this.randomGradientDescent(state, i);
 				} else {
