@@ -69,7 +69,7 @@ public class Finisher {
 	}
 
 	static DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.00000000");
-	
+
 	public void learn() {
 
 		// this.initialState = initialState;
@@ -77,6 +77,8 @@ public class Finisher {
 		double data[][] = null;
 		if (beta == -71) {
 			data = CopyOfISS.getM71();
+		} else if (beta == -73) {
+			data = CopyOfISS.dataM73;
 		} else if (beta == -75) {
 			data = CopyOfISS.dataM75;
 		}
@@ -108,7 +110,7 @@ public class Finisher {
 			}
 			osw.write("\n}");
 			osw.flush();
-			
+
 			Optimizer optimizer = new Optimizer();
 			double[][] answer = optimizer.optimize(optimizeInput, beta, 0);
 			osw.write("============");
@@ -131,10 +133,10 @@ public class Finisher {
 
 	}
 
-	//private static final double DIFF = 0.1;
+	// private static final double DIFF = 0.1;
 	private static final double DIFF = 0.05;
 
-	//private static final double ALPHA = 0.001;
+	// private static final double ALPHA = 0.001;
 	private static final double ALPHA = 0.0005;
 
 	private static final double THRESHOLD = 0.1;
