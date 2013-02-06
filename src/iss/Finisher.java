@@ -147,7 +147,7 @@ public class Finisher {
 
 	private static final double THRESHOLD = 0.1;
 
-	private static final int ENTIRE_LOOP_COUNT = 5;
+	private static final int ENTIRE_LOOP_COUNT = 3;
 
 	private static final int MAX_SINGLE_LOOP_COUNT = 50;
 
