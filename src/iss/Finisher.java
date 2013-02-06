@@ -81,6 +81,8 @@ public class Finisher {
 			data = CopyOfISS.dataM73;
 		} else if (beta == -75) {
 			data = CopyOfISS.dataM75;
+		} else if (beta == 73) {
+			data = CopyOfISS.getP73();
 		}
 
 		double[][] optimizeInput = new double[data.length][10];
