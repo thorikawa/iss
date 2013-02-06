@@ -78,11 +78,15 @@ public class Finisher {
 		if (beta == -71) {
 			data = CopyOfISS.getM71();
 		} else if (beta == -73) {
-			data = CopyOfISS.dataM73;
+			data = CopyOfISS.getM73();
 		} else if (beta == -75) {
-			data = CopyOfISS.dataM75;
+			data = CopyOfISS.getM75();
+		} else if (beta == 71) {
+			data = CopyOfISS.getP71();
 		} else if (beta == 73) {
 			data = CopyOfISS.getP73();
+		} else if (beta == 75) {
+			data = CopyOfISS.getP75();
 		}
 
 		double[][] optimizeInput = new double[data.length][10];
